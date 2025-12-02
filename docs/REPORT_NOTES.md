@@ -22,6 +22,78 @@
 
 ## Implementation Evolution
 
+### Summary: Original Plan → Phase 1 → Phase 2
+
+| Aspect | Original Proposal | Phase 1 (Initial Impl) | Phase 2 (Final) |
+|--------|-------------------|------------------------|-----------------|
+| **What's Cached** | K/V tensors | K/V tensors | Attention output |
+| **Quantization** | INT8 (mandatory) | INT8 or FP16 | FP16 only (INT8 bypassed) |
+| **Reuse Decision** | SNR + Entropy + MLP | SNR + Layer Schedule | Layer Schedule only |
+| **On Reuse** | Dequantize K/V → Compute attn with fresh Q | Same as proposal | Return cached output directly |
+| **Quality** | Expected: good | Actual: degraded | Actual: preserved |
+| **Speedup (A100)** | Target: 1.25× | Achieved: 1.56× | Achieved: 1.56× |
+
+### What Changed and Why
+
+| Change | Reason |
+|--------|--------|
+| Dropped MLP-based reuse policy | Rule-based scheduling achieved target; MLP added complexity without benefit |
+| Dropped entropy-based gating | Layer scheduling sufficient; entropy computation added overhead |
+| K/V caching → Output caching | Q/K/V temporal mismatch caused quality degradation |
+| INT8 → FP16 for outputs | Output caching bypasses quantization; FP16 preserves quality |
+| Warmup 2 → 5 timesteps | Early timesteps critical for image structure |
+| Warmup 20% → 40% | Phase 2.1: More conservative scheduling for quality |
+| All layers → Shallow only | Phase 2.1: Only first 1/3 of layers reuse for quality |
+
+### Timeline
+
+```
+Original Proposal (CS494_Project_Proposal.pdf)
+    │
+    ▼
+Phase 1: Implement K/V caching with INT8 quantization
+    │   - Result: 1.56× speedup on A100
+    │   - Problem: Quality degradation (blurry, artifacts)
+    │
+    ▼
+Root Cause Analysis: Q/K/V temporal mismatch identified
+    │   - Fresh Q (current timestep) × Stale K/V (previous timestep)
+    │   - Attention weights computed incorrectly
+    │
+    ▼
+Phase 2: Switch to attention output caching
+    │   - Cache final attention output (after out projection)
+    │   - Skip entire attention block on reuse
+    │   - Result: Same speedup, quality preserved
+    │
+    ▼
+Final Implementation (current)
+```
+
+### Phase 2.1: Quality-Focused Scheduling
+
+**Problem**: Even with output caching, aggressive reuse (98% reuse ratio) can still degrade quality.
+
+**Solution**: More conservative scheduling:
+
+| Parameter | Before | After | Rationale |
+|-----------|--------|-------|-----------|
+| Warmup fraction | 20% | 40% | Protect more early timesteps (critical for structure) |
+| Max reusable layers | All 28 | First 9 (1/3) | Shallow layers are less sensitive to temporal changes |
+
+**Expected trade-off**:
+- Quality: Significantly better (fewer layers reused, later start)
+- Speedup: ~1.15-1.2× (down from 1.56×, but still meets target)
+- Reuse ratio: ~20-30% (down from 48-98%)
+
+**Code change** (`layer_scheduler.py`):
+```python
+warmup_fraction = 0.4  # Was 0.2
+max_reusable_layers = self.config.num_layers // 3  # Was num_layers
+```
+
+---
+
 ### Phase 1: K/V Caching (Original Proposal)
 
 **Approach** (per Section 3.2 of proposal):
@@ -131,6 +203,31 @@ Deep:      [COMPUTE........][COMPUTE........][REUSE.......]
 | FP16 | 16 | Quality preservation, less memory savings |
 
 **Finding**: FP16 (no quantization) recommended for output caching to preserve quality.
+
+### Why `scheduling_only` and `full_dqar` Have Identical Quality
+
+**Observation**: Despite different quantization settings (FP16 vs INT8), both configs produce identical quality.
+
+**Root Cause**: The `attention_output` field in `KVCacheEntry` bypasses quantization entirely.
+
+```python
+# In kv_cache.py store():
+k_quantized = quantizer.quantize(key)      # ← quantized (but unused in Phase 2)
+v_quantized = quantizer.quantize(value)    # ← quantized (but unused in Phase 2)
+
+entry = KVCacheEntry(
+    key=k_quantized,
+    value=v_quantized,
+    attention_output=attention_output,      # ← stored DIRECTLY in FP16, no quantization!
+)
+```
+
+**Implication**: With Phase 2 output caching, the "Quantization-Aware" aspect of DQAR became irrelevant. Both configs effectively store attention outputs in full precision (FP16), making quantization bits a no-op for quality.
+
+| Config | Quantization Setting | Actual Output Precision |
+|--------|---------------------|------------------------|
+| `scheduling_only` | 16-bit | FP16 |
+| `full_dqar` | 8-bit | FP16 (unchanged!) |
 
 ### Cache Architecture
 
