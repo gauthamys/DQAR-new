@@ -1,0 +1,58 @@
+[
+  {
+    "name": "baseline",
+    "description": "No DQAR (baseline)",
+    "total_time_s": 6.989066123962402,
+    "time_per_sample_s": 1.7472665309906006,
+    "speedup": 1.0,
+    "reuse_ratio": 0.0,
+    "cache_memory_mb": 0.0,
+    "num_samples": 4,
+    "num_steps": 50,
+    "schedule_type": "N/A",
+    "quantization_bits": 8,
+    "enable_dqar": false
+  },
+  {
+    "name": "scheduling_only",
+    "description": "Layer scheduling only (FP16 cache)",
+    "total_time_s": 6.015028238296509,
+    "time_per_sample_s": 1.5037570595741272,
+    "speedup": 1.161934050361457,
+    "reuse_ratio": 0.485,
+    "cache_memory_mb": 126.00010681152344,
+    "num_samples": 4,
+    "num_steps": 50,
+    "schedule_type": "linear",
+    "quantization_bits": 16,
+    "enable_dqar": true
+  },
+  {
+    "name": "quant_cache_only",
+    "description": "INT8 quantized cache (all layers)",
+    "total_time_s": 5.5944504737854,
+    "time_per_sample_s": 1.39861261844635,
+    "speedup": 1.2492855476533258,
+    "reuse_ratio": 0.98,
+    "cache_memory_mb": 126.00010681152344,
+    "num_samples": 4,
+    "num_steps": 50,
+    "schedule_type": "linear",
+    "quantization_bits": 8,
+    "enable_dqar": true
+  },
+  {
+    "name": "full_dqar",
+    "description": "Full DQAR (scheduling + INT8)",
+    "total_time_s": 6.083195447921753,
+    "time_per_sample_s": 1.5207988619804382,
+    "speedup": 1.1489136234066142,
+    "reuse_ratio": 0.485,
+    "cache_memory_mb": 126.00010681152344,
+    "num_samples": 4,
+    "num_steps": 50,
+    "schedule_type": "linear",
+    "quantization_bits": 8,
+    "enable_dqar": true
+  }
+]

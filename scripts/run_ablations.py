@@ -77,6 +77,13 @@ ABLATIONS = {
         "use_layer_scheduling": True,
         "schedule_type": "linear",
     },
+    "full_dqar_fp16": {
+        "description": "Full DQAR with FP16 cache (no quantization)",
+        "enable_dqar": True,
+        "quantization_bits": 16,
+        "use_layer_scheduling": True,
+        "schedule_type": "linear",
+    },
 
     # === Schedule type comparison ===
     "schedule_linear": {
@@ -480,12 +487,35 @@ def parse_args():
     return parser.parse_args()
 
 
+def get_device_folder_name(device: str) -> str:
+    """Get a device-specific folder name for results."""
+    if "mps" in device.lower():
+        return "apple_silicon"
+    elif "cuda" in device.lower():
+        # Try to get GPU name
+        try:
+            import torch
+            if torch.cuda.is_available():
+                gpu_name = torch.cuda.get_device_name(0)
+                # Clean up GPU name for folder
+                gpu_name = gpu_name.replace(" ", "_").replace("/", "_")
+                return f"{gpu_name}"
+        except:
+            pass
+        return "cuda_gpu"
+    else:
+        return "cpu"
+
+
 def main():
     args = parse_args()
 
     # Setup
     device = args.device or get_device()
-    output_dir = Path(args.output_dir)
+
+    # Create device-specific output directory
+    device_folder = get_device_folder_name(device)
+    output_dir = Path(args.output_dir) / device_folder
     output_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"DQAR Ablation Study")

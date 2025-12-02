@@ -95,8 +95,13 @@ class LayerScheduler(nn.Module):
 
     def _linear_schedule(self, progress: float) -> List[int]:
         """Linear progression of reusable layers."""
-        # Number of layers that can be reused increases linearly
-        num_reusable = int(progress * self.config.num_layers)
+        # Delay reuse until 20% of timesteps complete to protect early unstable steps
+        warmup_fraction = 0.2
+        if progress < warmup_fraction:
+            return []  # No reuse during warmup
+        # Number of layers that can be reused increases linearly after warmup
+        adjusted_progress = (progress - warmup_fraction) / (1 - warmup_fraction)
+        num_reusable = int(adjusted_progress * self.config.num_layers)
         return list(range(num_reusable))
 
     def _exponential_schedule(self, progress: float) -> List[int]:

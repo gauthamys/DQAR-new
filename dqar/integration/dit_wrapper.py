@@ -34,7 +34,7 @@ class DQARConfig:
     snr_low: float = 0.1
     snr_high: float = 10.0
     adaptive_entropy: bool = True
-    warmup_steps: int = 2
+    warmup_steps: int = 5  # Increased to protect early unstable timesteps
 
     # Quantization configuration
     quantization_mode: str = "per_tensor"
