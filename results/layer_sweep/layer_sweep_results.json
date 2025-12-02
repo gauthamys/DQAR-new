@@ -1,0 +1,74 @@
+{
+  "baseline": {
+    "warmup_fraction": 1.0,
+    "max_layers_fraction": 0.0,
+    "total_time_s": 11.086448370000198,
+    "time_per_sample_s": 2.7716120925000496,
+    "speedup": 1.0,
+    "reuse_ratio": 0.0,
+    "cache_memory_mb": 0.0,
+    "peak_memory_mb": 1868.83837890625,
+    "num_samples": 4,
+    "is_baseline": true
+  },
+  "layers_33pct": {
+    "warmup_fraction": 0.2,
+    "max_layers_fraction": 0.33,
+    "total_time_s": 10.612839622000138,
+    "time_per_sample_s": 2.6532099055000344,
+    "speedup": 1.0446260157383593,
+    "reuse_ratio": 0.11571428571428571,
+    "cache_memory_mb": 63.00010681152344,
+    "peak_memory_mb": 1868.83837890625,
+    "num_samples": 4,
+    "is_baseline": false
+  },
+  "layers_50pct": {
+    "warmup_fraction": 0.2,
+    "max_layers_fraction": 0.5,
+    "total_time_s": 10.285635706999983,
+    "time_per_sample_s": 2.5714089267499958,
+    "speedup": 1.077857381479612,
+    "reuse_ratio": 0.18714285714285714,
+    "cache_memory_mb": 63.00010681152344,
+    "peak_memory_mb": 1868.83837890625,
+    "num_samples": 4,
+    "is_baseline": false
+  },
+  "layers_66pct": {
+    "warmup_fraction": 0.2,
+    "max_layers_fraction": 0.66,
+    "total_time_s": 9.993851344999712,
+    "time_per_sample_s": 2.498462836249928,
+    "speedup": 1.1093269238537506,
+    "reuse_ratio": 0.245,
+    "cache_memory_mb": 63.00010681152344,
+    "peak_memory_mb": 1868.83837890625,
+    "num_samples": 4,
+    "is_baseline": false
+  },
+  "layers_75pct": {
+    "warmup_fraction": 0.2,
+    "max_layers_fraction": 0.75,
+    "total_time_s": 9.931979431999935,
+    "time_per_sample_s": 2.4829948579999837,
+    "speedup": 1.1162375482052118,
+    "reuse_ratio": 0.28714285714285714,
+    "cache_memory_mb": 63.00010681152344,
+    "peak_memory_mb": 1868.83837890625,
+    "num_samples": 4,
+    "is_baseline": false
+  },
+  "layers_100pct": {
+    "warmup_fraction": 0.2,
+    "max_layers_fraction": 1.0,
+    "total_time_s": 9.411030238999729,
+    "time_per_sample_s": 2.352757559749932,
+    "speedup": 1.1780270691361145,
+    "reuse_ratio": 0.3871428571428571,
+    "cache_memory_mb": 63.00010681152344,
+    "peak_memory_mb": 1868.83837890625,
+    "num_samples": 4,
+    "is_baseline": false
+  }
+}

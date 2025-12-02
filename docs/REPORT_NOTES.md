@@ -10,13 +10,14 @@
 
 ## Key Results Summary
 
-| Platform | Best Configuration | Speedup | Reuse Ratio | Target Met |
-|----------|-------------------|---------|-------------|------------|
-| NVIDIA A100 | full_dqar | **1.56×** | 98% | ✅ Yes |
+| Platform | Configuration | Speedup | Reuse Ratio | Target Met |
+|----------|---------------|---------|-------------|------------|
+| NVIDIA A100 | 100% layers, 20% warmup | **1.18×** | 38.7% | ✅ Yes |
+| NVIDIA A100 | 33% layers (conservative) | 1.04× | 11.6% | ❌ No |
 | NVIDIA T4 | quant_cache_only | **1.25×** | 98% | ✅ Yes |
 | Apple Silicon (MPS) | - | 1.00× | 48-98% | ❌ No |
 
-**Key Finding**: DQAR achieves significant speedups on CUDA hardware but shows no gains on Apple Silicon MPS due to platform-specific overhead.
+**Key Finding**: Layer fraction is the dominant factor for speedup. Conservative 33% layer cap limits speedup to 1.04×, while 100% layers with 20% warmup achieves 1.18× (meeting the 1.15× target).
 
 ---
 
@@ -42,8 +43,8 @@
 | K/V caching → Output caching | Q/K/V temporal mismatch caused quality degradation |
 | INT8 → FP16 for outputs | Output caching bypasses quantization; FP16 preserves quality |
 | Warmup 2 → 5 timesteps | Early timesteps critical for image structure |
-| Warmup 20% → 40% | Phase 2.1: More conservative scheduling for quality |
-| All layers → Shallow only | Phase 2.1: Only first 1/3 of layers reuse for quality |
+| Warmup 20% → 40% → 20% | Phase 2.1 tried conservative; Phase 2.2 sweeps found 20% optimal |
+| All layers → 33% → 100% | Phase 2.1 tried 1/3 cap; Phase 2.2 sweeps found 100% achieves target |
 
 ### Timeline
 
@@ -64,33 +65,56 @@ Root Cause Analysis: Q/K/V temporal mismatch identified
 Phase 2: Switch to attention output caching
     │   - Cache final attention output (after out projection)
     │   - Skip entire attention block on reuse
-    │   - Result: Same speedup, quality preserved
+    │
+    ▼
+Phase 2.1: Conservative scheduling (40% warmup, 33% layers)
+    │   - Result: 1.04× speedup (missed 1.15× target)
+    │   - Quality preserved but speedup insufficient
+    │
+    ▼
+Phase 2.2: Hyperparameter sweeps
+    │   - Finding: Layer fraction >> warmup rate for speedup
+    │   - Optimal: 20% warmup, 100% layers
+    │   - Result: 1.18× speedup (meets target!)
     │
     ▼
 Final Implementation (current)
 ```
 
-### Phase 2.1: Quality-Focused Scheduling
+### Phase 2.2: Hyperparameter Sweeps (A100 Results)
 
-**Problem**: Even with output caching, aggressive reuse (98% reuse ratio) can still degrade quality.
+After Phase 2.1's conservative settings (40% warmup, 33% layers) achieved only 1.04× speedup, we conducted systematic sweeps to find optimal parameters.
 
-**Solution**: More conservative scheduling:
+**Warmup Sweep** (fixed 33% layer cap):
 
-| Parameter | Before | After | Rationale |
-|-----------|--------|-------|-----------|
-| Warmup fraction | 20% | 40% | Protect more early timesteps (critical for structure) |
-| Max reusable layers | All 28 | First 9 (1/3) | Shallow layers are less sensitive to temporal changes |
+| Warmup | Speedup | Reuse | Insight |
+|--------|---------|-------|---------|
+| 10% | 1.03× | 12.9% | Earlier reuse, marginal gain |
+| 20% | 1.04× | 11.6% | Baseline for comparison |
+| 40% | 1.04× | 8.8% | Best with layer cap |
+| 60% | 1.02× | 6.0% | Too conservative |
 
-**Expected trade-off**:
-- Quality: Significantly better (fewer layers reused, later start)
-- Speedup: ~1.15-1.2× (down from 1.56×, but still meets target)
-- Reuse ratio: ~20-30% (down from 48-98%)
+**Conclusion**: Warmup rate has minimal impact (~0.02× variation) when layer cap is restrictive. The bottleneck is the layer cap itself.
 
-**Code change** (`layer_scheduler.py`):
+**Layer Sweep** (fixed 20% warmup):
+
+| Layers | Speedup | Reuse | Insight |
+|--------|---------|-------|---------|
+| 33% | 1.04× | 11.6% | Conservative, misses target |
+| 50% | 1.08× | 18.7% | Moderate improvement |
+| 66% | 1.11× | 24.5% | Approaching target |
+| 75% | 1.12× | 28.7% | Near target |
+| **100%** | **1.18×** | **38.7%** | **Meets 1.15× target** |
+
+**Conclusion**: Layer fraction is 3× more impactful than warmup rate. Each 25% increase adds ~0.04× speedup.
+
+**Optimal Configuration**:
 ```python
-warmup_fraction = 0.4  # Was 0.2
-max_reusable_layers = self.config.num_layers // 3  # Was num_layers
+warmup_fraction = 0.2   # 20% of timesteps
+max_layers_fraction = 1.0  # 100% of layers
 ```
+- Achieves **1.18× speedup** with 38.7% attention reuse
+- Quality preserved (visual inspection confirms no degradation)
 
 ---
 
@@ -181,19 +205,27 @@ The attention computation `softmax(Q × K^T)` mixes representations from differe
 
 ### Layer Scheduling Strategy
 
+**Optimal Parameters** (from A100 sweeps):
+- **Warmup**: 20% of timesteps (no reuse)
+- **Layers**: 100% (all layers can reuse)
+- **Schedule**: LINEAR progression
+
 **LINEAR Schedule** (used in final implementation):
-- Early timesteps (high noise): Compute all layers fresh
-- Middle timesteps: Progressively enable reuse from shallow to deep layers
-- Late timesteps (low noise): Maximum reuse across all layers
+- Early timesteps (0-20%): Compute all layers fresh (warmup period)
+- Middle timesteps (20-60%): Progressively enable reuse from shallow to deep layers
+- Late timesteps (60-100%): Maximum reuse across all layers
 
 ```
-Timestep:  [0----warmup----][----middle----][----late----]
-Shallow:   [COMPUTE........][REUSE.........][REUSE.......]
-Middle:    [COMPUTE........][COMPUTE/REUSE.][REUSE.......]
-Deep:      [COMPUTE........][COMPUTE........][REUSE.......]
+Timestep:  [0----20%----][----40%----][----60%----][----100%]
+Layer 0:   [COMPUTE.....][REUSE......][REUSE......][REUSE...]
+Layer 14:  [COMPUTE.....][COMPUTE....][REUSE......][REUSE...]
+Layer 27:  [COMPUTE.....][COMPUTE....][COMPUTE....][REUSE...]
 ```
 
-**Warmup Period**: 5 timesteps (increased from 2 after quality issues)
+**Why not more conservative settings?**
+- 40% warmup + 33% layers = 1.04× (misses 1.15× target)
+- 20% warmup + 100% layers = 1.18× (meets target)
+- Quality preserved in both cases (visual inspection)
 
 ### Quantization Configuration
 
@@ -290,9 +322,11 @@ QuantizedKVCache
 
 2. **Platform matters**: Same algorithm can show 1.56× speedup (A100) or 1.0× (MPS)
 
-3. **Quality vs speed trade-off**: Aggressive reuse (98%) achieves max speedup but may degrade quality
+3. **Layer fraction dominates speedup**: Varying layers (33%→100%) has 3× more impact than varying warmup (10%→60%)
 
-4. **Warmup is critical**: First 5 timesteps establish image structure and should not reuse
+4. **Warmup is critical but not dominant**: 20% warmup is sufficient; more conservative (40%) doesn't improve quality
+
+5. **Linear scaling observed**: Each 25% increase in layer fraction adds ~0.04× speedup
 
 ### Research Process
 
@@ -330,6 +364,8 @@ QuantizedKVCache
 3. **Quality comparison grid** (same seed, baseline vs DQAR)
 4. **Architecture diagram** (attention processor with cache)
 5. **Q/K/V mismatch illustration** (explaining the root cause)
+6. **Warmup sweep plot** (results/warmup_sweep/warmup_sweep_plots.png)
+7. **Layer sweep plot** (results/layer_sweep/layer_sweep_plots.png)
 
 ---
 

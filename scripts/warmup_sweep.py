@@ -119,6 +119,7 @@ def restore_warmup_fraction(original_method):
 def run_benchmark(
     wrapper: DQARDiTWrapper,
     sampler: DQARDDIMSampler,
+    vae,  # VAE for decoding latents to images
     num_samples: int,
     class_labels: List[int],
     seed: int,
@@ -181,12 +182,21 @@ def run_benchmark(
         end_time = time.perf_counter()
 
         total_time += (end_time - start_time)
-        images.append(image.cpu())
+
+        # Decode latent to image using VAE
+        if vae is not None:
+            with torch.no_grad():
+                latent_scaled = 1 / vae.config.scaling_factor * image
+                decoded = vae.decode(latent_scaled).sample
+                decoded = (decoded / 2 + 0.5).clamp(0, 1)
+            images.append(decoded.cpu())
+        else:
+            images.append(image.cpu())
 
         # Save individual images
-        if save_images and image_dir and HAS_PIL:
+        if save_images and image_dir and HAS_PIL and vae is not None:
             img_path = image_dir / f"{config_name}_sample{i}_class{class_label}.png"
-            save_tensor_as_image(image, img_path)
+            save_tensor_as_image(decoded, img_path)
 
     # Collect metrics
     peak_memory = get_memory_usage()
@@ -220,7 +230,10 @@ def run_benchmark(
 
 
 def save_tensor_as_image(tensor: torch.Tensor, path: Path):
-    """Save a tensor as an image file."""
+    """Save a tensor as an image file.
+
+    Assumes tensor is already in [0, 1] range (decoded from VAE).
+    """
     if not HAS_PIL:
         return
 
@@ -228,16 +241,15 @@ def save_tensor_as_image(tensor: torch.Tensor, path: Path):
     if tensor.dim() == 4:
         tensor = tensor[0]
 
-    # Normalize to 0-255
-    tensor = (tensor + 1) / 2  # From [-1, 1] to [0, 1]
+    # Tensor is already in [0, 1] range from VAE decode
     tensor = tensor.clamp(0, 1)
     tensor = (tensor * 255).byte()
 
-    # Convert to PIL
+    # Convert to PIL (C, H, W) -> (H, W, C)
     if tensor.shape[0] == 3:
         tensor = tensor.permute(1, 2, 0)
 
-    img = Image.fromarray(tensor.numpy())
+    img = Image.fromarray(tensor.cpu().numpy())
     img.save(path)
 
 
@@ -395,8 +407,9 @@ def create_image_grid(images: Dict[str, List[torch.Tensor]], output_dir: Path):
                 img = images[config][j]
                 if img.dim() == 4:
                     img = img[0]
-                img = (img + 1) / 2  # [-1,1] -> [0,1]
-                img = img.clamp(0, 1).permute(1, 2, 0).numpy()
+                # Images are already in [0, 1] range from VAE decode
+                # Convert to float32 for matplotlib compatibility
+                img = img.clamp(0, 1).permute(1, 2, 0).float().numpy()
 
                 axes[i, j].imshow(img)
                 axes[i, j].axis('off')
@@ -567,6 +580,7 @@ def main():
     baseline_result, baseline_images = run_benchmark(
         wrapper=wrapper,
         sampler=sampler,
+        vae=vae,
         num_samples=args.num_samples,
         class_labels=class_labels,
         seed=args.seed,
@@ -590,6 +604,7 @@ def main():
         result, images = run_benchmark(
             wrapper=wrapper,
             sampler=sampler,
+            vae=vae,
             num_samples=args.num_samples,
             class_labels=class_labels,
             seed=args.seed,

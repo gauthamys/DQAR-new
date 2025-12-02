@@ -1,0 +1,86 @@
+{
+  "baseline": {
+    "warmup_fraction": 1.0,
+    "max_layers_fraction": 0.0,
+    "total_time_s": 10.953428081000084,
+    "time_per_sample_s": 2.738357020250021,
+    "speedup": 1.0,
+    "reuse_ratio": 0.0,
+    "cache_memory_mb": 0.0,
+    "peak_memory_mb": 1868.83837890625,
+    "num_samples": 4,
+    "is_baseline": true
+  },
+  "warmup_10pct": {
+    "warmup_fraction": 0.1,
+    "max_layers_fraction": 0.33,
+    "total_time_s": 10.61163503000023,
+    "time_per_sample_s": 2.6529087575000574,
+    "speedup": 1.0322092731264851,
+    "reuse_ratio": 0.12928571428571428,
+    "cache_memory_mb": 63.00010681152344,
+    "peak_memory_mb": 1868.83837890625,
+    "num_samples": 4,
+    "is_baseline": false
+  },
+  "warmup_20pct": {
+    "warmup_fraction": 0.2,
+    "max_layers_fraction": 0.33,
+    "total_time_s": 10.53341245799993,
+    "time_per_sample_s": 2.6333531144999824,
+    "speedup": 1.0398746013862925,
+    "reuse_ratio": 0.11571428571428571,
+    "cache_memory_mb": 63.00010681152344,
+    "peak_memory_mb": 1868.83837890625,
+    "num_samples": 4,
+    "is_baseline": false
+  },
+  "warmup_30pct": {
+    "warmup_fraction": 0.3,
+    "max_layers_fraction": 0.33,
+    "total_time_s": 10.574796536999997,
+    "time_per_sample_s": 2.6436991342499994,
+    "speedup": 1.035805090213821,
+    "reuse_ratio": 0.10142857142857142,
+    "cache_memory_mb": 63.00010681152344,
+    "peak_memory_mb": 1868.83837890625,
+    "num_samples": 4,
+    "is_baseline": false
+  },
+  "warmup_40pct": {
+    "warmup_fraction": 0.4,
+    "max_layers_fraction": 0.33,
+    "total_time_s": 10.498641390999978,
+    "time_per_sample_s": 2.6246603477499946,
+    "speedup": 1.0433186231496556,
+    "reuse_ratio": 0.08785714285714286,
+    "cache_memory_mb": 63.00010681152344,
+    "peak_memory_mb": 1868.83837890625,
+    "num_samples": 4,
+    "is_baseline": false
+  },
+  "warmup_50pct": {
+    "warmup_fraction": 0.5,
+    "max_layers_fraction": 0.33,
+    "total_time_s": 10.651932781999903,
+    "time_per_sample_s": 2.662983195499976,
+    "speedup": 1.0283042810324208,
+    "reuse_ratio": 0.07357142857142857,
+    "cache_memory_mb": 63.00010681152344,
+    "peak_memory_mb": 1868.83837890625,
+    "num_samples": 4,
+    "is_baseline": false
+  },
+  "warmup_60pct": {
+    "warmup_fraction": 0.6,
+    "max_layers_fraction": 0.33,
+    "total_time_s": 10.76519476899989,
+    "time_per_sample_s": 2.6912986922499726,
+    "speedup": 1.0174853605568048,
+    "reuse_ratio": 0.06,
+    "cache_memory_mb": 63.00010681152344,
+    "peak_memory_mb": 1868.83837890625,
+    "num_samples": 4,
+    "is_baseline": false
+  }
+}
