@@ -1,0 +1,126 @@
+# DQAR Default Configuration
+# Dynamic and Quantization-Aware Attention Reuse for Diffusion Transformers
+
+# Model Configuration
+model:
+  name: "facebook/DiT-XL-2-256"
+  num_layers: 28
+  num_heads: 16
+  dtype: "float16"
+
+# Reuse Gate Configuration
+reuse_gate:
+  # Entropy threshold - attention is reused only if H_t < threshold
+  entropy_threshold: 2.0
+
+  # SNR range - attention is reused only if SNR_t is within [snr_low, snr_high]
+  snr_low: 0.1
+  snr_high: 10.0
+
+  # Adaptive entropy threshold based on prompt length
+  adaptive_entropy: true
+  base_prompt_length: 77
+
+  # Warmup steps before enabling reuse
+  warmup_steps: 2
+
+# Quantization Configuration
+quantization:
+  # Mode: "per_tensor" (fastest), "per_channel" (best quality), "per_head"
+  mode: "per_tensor"
+  bits: 8
+
+  # Whether to also cache attention outputs
+  cache_attention_output: true
+
+# Layer Scheduling Configuration
+layer_scheduling:
+  enabled: true
+  # Schedule type: "linear", "exponential", "step"
+  schedule_type: "step"
+
+  # Phase boundaries (fraction of total timesteps)
+  early_phase_end: 0.3
+  mid_phase_end: 0.7
+
+  # SNR threshold for deep layer reuse
+  deep_layer_snr_threshold: 1.0
+
+# Learned Policy Configuration
+policy:
+  enabled: false
+  checkpoint_path: null
+
+  # Network architecture
+  hidden_dims: [64, 32]
+  dropout: 0.1
+
+  # Decision threshold
+  reuse_threshold: 0.5
+
+# Sampler Configuration
+sampler:
+  type: "ddim"  # "ddim" or "dpm_solver"
+  num_inference_steps: 50
+  guidance_scale: 4.0
+  eta: 0.0  # DDIM eta (0 = deterministic)
+
+  # CFG branch sharing
+  cfg_sharing: true
+
+# Training Configuration (for policy learning)
+training:
+  learning_rate: 0.001
+  weight_decay: 0.00001
+  batch_size: 64
+  num_epochs: 100
+  patience: 10
+
+  # Data split
+  train_split: 0.8
+  val_split: 0.1
+
+# Evaluation Configuration
+evaluation:
+  num_samples: 256
+  batch_size: 4
+
+  # Metrics to compute
+  compute_fid: true
+  compute_clip_score: true
+
+  # Reference data paths
+  reference_stats_path: null
+  prompts_file: null
+
+# Profiling
+profiling:
+  enabled: false
+  warmup_runs: 1
+  num_runs: 3
+
+# Experiment configurations for ablations
+ablations:
+  baseline:
+    entropy_threshold: 0.0
+    snr_low: 1000000
+    snr_high: 1000000
+
+  entropy_gate_only:
+    entropy_threshold: 2.0
+    snr_low: 0.0
+    snr_high: 1000000
+    quantization_bits: 16
+
+  quant_cache_only:
+    entropy_threshold: 1000000
+    snr_low: 0.0
+    snr_high: 1000000
+    quantization_bits: 8
+
+  full_dqar:
+    entropy_threshold: 2.0
+    snr_low: 0.1
+    snr_high: 10.0
+    quantization_bits: 8
+    layer_scheduling: true

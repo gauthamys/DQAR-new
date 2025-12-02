@@ -1,0 +1,4 @@
+[console_scripts]
+dqar-eval = scripts.evaluate:main
+dqar-infer = scripts.run_inference:main
+dqar-train = scripts.train_policy:main
