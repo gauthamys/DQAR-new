@@ -84,6 +84,13 @@ ABLATIONS = {
         "use_layer_scheduling": True,
         "schedule_type": "linear",
     },
+    "attention_output_cache": {
+        "description": "Attention output caching (Phase 2)",
+        "enable_dqar": True,
+        "quantization_bits": 16,  # FP16 for output (no INT8 quantization)
+        "use_layer_scheduling": True,
+        "schedule_type": "linear",
+    },
 
     # === Schedule type comparison ===
     "schedule_linear": {

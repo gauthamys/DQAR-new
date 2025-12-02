@@ -89,41 +89,34 @@ class DQARAttentionProcessor:
         if attn.group_norm is not None:
             hidden_states = attn.group_norm(hidden_states.transpose(1, 2)).transpose(1, 2)
 
-        # Always compute Query (needed regardless of reuse)
+        # Determine if this is cross-attention
+        is_cross = encoder_hidden_states is not None
+
+        # Check for cached attention output FIRST (Phase 2: output caching)
+        # This avoids the Q/K/V mismatch by reusing the entire output
+        if not is_cross and self.manager.should_reuse(self.layer_idx):
+            cached_output = self.manager.get_cached_attention_output(self.layer_idx)
+            if cached_output is not None:
+                self.manager.record_reuse(self.layer_idx)
+                # Apply post-processing to cached output
+                if input_ndim == 4:
+                    cached_output = cached_output.transpose(-1, -2).reshape(batch_size, channel, height, width)
+                if attn.residual_connection:
+                    cached_output = cached_output + residual
+                return cached_output / attn.rescale_output_factor
+
+        # Normal computation path: compute Q, K, V, attention
         query = attn.to_q(hidden_states)
 
         # Determine K/V input source
-        is_cross = encoder_hidden_states is not None
         if is_cross:
             kv_input = encoder_hidden_states
         else:
             kv_input = hidden_states
 
-        # Check reuse decision (SNR + layer scheduling)
-        should_reuse = (
-            not is_cross  # Only reuse self-attention, not cross-attention
-            and self.manager.should_reuse(self.layer_idx)
-        )
-
-        if should_reuse:
-            # Retrieve cached K/V
-            cached = self.manager.get_cached_kv(self.layer_idx)
-            if cached is not None:
-                key, value, _ = cached
-                self.manager.record_reuse(self.layer_idx)
-            else:
-                # Cache miss - compute new K/V
-                should_reuse = False
-
-        if not should_reuse:
-            # Compute K/V projections
-            key = attn.to_k(kv_input)
-            value = attn.to_v(kv_input)
-
-            # Cache K/V for future reuse (only self-attention)
-            if not is_cross:
-                self.manager.cache_kv(self.layer_idx, key, value)
-                self.manager.record_compute(self.layer_idx)
+        # Compute K/V projections
+        key = attn.to_k(kv_input)
+        value = attn.to_v(kv_input)
 
         # Get attention dimensions
         inner_dim = key.shape[-1]
@@ -155,6 +148,12 @@ class DQARAttentionProcessor:
         # Apply output projection
         hidden_states = attn.to_out[0](hidden_states)  # Linear
         hidden_states = attn.to_out[1](hidden_states)  # Dropout
+
+        # Cache the attention output for future reuse (only self-attention)
+        # Cache BEFORE 4D reshape and residual so we can apply those on retrieval
+        if not is_cross:
+            self.manager.cache_attention_output(self.layer_idx, hidden_states.clone())
+            self.manager.record_compute(self.layer_idx)
 
         # Handle 4D input case
         if input_ndim == 4:

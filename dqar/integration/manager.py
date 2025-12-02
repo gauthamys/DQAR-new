@@ -125,6 +125,37 @@ class DQARManager:
         """
         return self.kv_cache.retrieve(layer_idx)
 
+    def get_cached_attention_output(self, layer_idx: int) -> Optional[torch.Tensor]:
+        """
+        Retrieve cached attention output for direct reuse.
+
+        Args:
+            layer_idx: Index of the transformer layer
+
+        Returns:
+            Cached attention output tensor or None if not cached
+        """
+        return self.kv_cache.retrieve_attention_output(layer_idx)
+
+    def cache_attention_output(self, layer_idx: int, output: torch.Tensor) -> None:
+        """
+        Cache attention output for future reuse.
+
+        Uses existing kv_cache infrastructure with the attention_output field.
+
+        Args:
+            layer_idx: Index of the transformer layer
+            output: Attention output tensor to cache
+        """
+        # Store with placeholder K/V (required by store()) and real attention output
+        self.kv_cache.store(
+            layer_idx=layer_idx,
+            key=output,  # Placeholder - not used for output caching
+            value=output,  # Placeholder - not used for output caching
+            attention_output=output,  # The actual cached value
+            timestep=self.current_timestep_idx,
+        )
+
     def cache_kv(
         self,
         layer_idx: int,
