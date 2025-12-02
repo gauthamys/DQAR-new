@@ -143,40 +143,40 @@ def run_benchmark(
     if not is_baseline:
         original_method = patch_warmup_fraction(warmup_fraction, max_layers_fraction)
         # Rebuild schedule with new parameters
-        if wrapper.dqar_manager and wrapper.dqar_manager.layer_scheduler:
-            wrapper.dqar_manager.layer_scheduler._build_schedule()
+        if wrapper.manager and wrapper.manager.layer_scheduler:
+            wrapper.manager.layer_scheduler._build_schedule()
 
     reset_memory_stats()
 
     # Warmup run (not timed)
     seed_everything(seed)
-    wrapper.reset_for_new_sample()
+    wrapper.reset()
     with torch.no_grad():
         _ = sampler.sample(
-            wrapper,
             batch_size=1,
             class_labels=torch.tensor([class_labels[0]], device=device),
+            progress_bar=False,
         )
 
     # Reset stats after warmup
-    if wrapper.dqar_manager:
-        wrapper.dqar_manager.reset_statistics()
+    if wrapper.manager:
+        wrapper.manager.reset_statistics()
     reset_memory_stats()
 
     # Timed runs
     total_time = 0.0
     for i in tqdm(range(num_samples), desc=f"  {config_name}", leave=False):
         seed_everything(seed + i)
-        wrapper.reset_for_new_sample()
+        wrapper.reset()
 
         class_label = class_labels[i % len(class_labels)]
 
         start_time = time.perf_counter()
         with torch.no_grad():
             image = sampler.sample(
-                wrapper,
                 batch_size=1,
                 class_labels=torch.tensor([class_label], device=device),
+                progress_bar=False,
             )
         end_time = time.perf_counter()
 
@@ -193,9 +193,10 @@ def run_benchmark(
 
     reuse_ratio = 0.0
     cache_memory = 0.0
-    if wrapper.dqar_manager and not is_baseline:
-        reuse_ratio = wrapper.dqar_manager.get_reuse_ratio()
-        cache_stats = wrapper.dqar_manager.kv_cache.get_memory_usage()
+    if wrapper.manager and not is_baseline:
+        stats = wrapper.manager.get_statistics()
+        reuse_ratio = stats.get("reuse_ratio", 0.0)
+        cache_stats = wrapper.manager.kv_cache.get_memory_usage()
         cache_memory = cache_stats.get("total_mb", 0.0)
 
     # Restore original method
@@ -536,28 +537,33 @@ def main():
 
     # Load model
     print("Loading model...")
+    from diffusers import DiTPipeline
+
+    pipe = DiTPipeline.from_pretrained(args.model, torch_dtype=torch.float16)
+    pipe.to(device)
+
+    model = pipe.transformer
+    scheduler = pipe.scheduler
+    vae = pipe.vae
+    print(f"Model loaded: {args.model}")
+
     dqar_config = DQARConfig(
-        enabled=True,
         quantization_bits=16,  # FP16 for quality
         use_layer_scheduling=True,
         schedule_type="linear",
     )
 
-    wrapper = DQARDiTWrapper(
-        model_name=args.model,
-        device=device,
-        dqar_config=dqar_config,
-    )
+    wrapper = DQARDiTWrapper(model, dqar_config)
 
-    sampler_config = SamplerConfig(num_steps=args.num_steps)
-    sampler = DQARDDIMSampler(config=sampler_config)
+    sampler_config = SamplerConfig(num_inference_steps=args.num_steps)
+    sampler = DQARDDIMSampler(wrapper, scheduler, sampler_config)
 
     results = {}
     all_images = {}
 
     # Run baseline
     print("\nRunning baseline...")
-    wrapper.disable_dqar()
+    wrapper.manager.enabled = False
     baseline_result, baseline_images = run_benchmark(
         wrapper=wrapper,
         sampler=sampler,
@@ -575,7 +581,7 @@ def main():
 
     # Run warmup sweep
     print("\nRunning warmup sweep...")
-    wrapper.enable_dqar()
+    wrapper.manager.enabled = True
 
     for warmup_rate in args.warmup_rates:
         config_name = f"warmup_{int(warmup_rate*100)}pct"
