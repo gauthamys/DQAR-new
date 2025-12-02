@@ -10,14 +10,15 @@
 
 ## Key Results Summary
 
-| Platform | Configuration | Speedup | Reuse Ratio | Target Met |
-|----------|---------------|---------|-------------|------------|
-| NVIDIA A100 | 100% layers, 20% warmup | **1.18×** | 38.7% | ✅ Yes |
-| NVIDIA A100 | 33% layers (conservative) | 1.04× | 11.6% | ❌ No |
-| NVIDIA T4 | quant_cache_only | **1.25×** | 98% | ✅ Yes |
-| Apple Silicon (MPS) | - | 1.00× | 48-98% | ❌ No |
+| Platform | Configuration | Speedup | Reuse Ratio | Quality |
+|----------|---------------|---------|-------------|---------|
+| NVIDIA A100 | **50% layers, 20% warmup (Recommended)** | **1.08×** | 18.7% | **Preserved** |
+| NVIDIA A100 | 100% layers, 20% warmup (Maximum) | 1.18× | 38.7% | Degraded |
+| NVIDIA A100 | 33% layers (conservative) | 1.04× | 11.6% | Preserved |
+| NVIDIA T4 | quant_cache_only | 1.25× | 98% | Preserved |
+| Apple Silicon (MPS) | - | 1.00× | 48-98% | N/A |
 
-**Key Finding**: Layer fraction is the dominant factor for speedup. Conservative 33% layer cap limits speedup to 1.04×, while 100% layers with 20% warmup achieves 1.18× (meeting the 1.15× target).
+**Key Finding**: Layer fraction is the dominant factor for speedup, but aggressive settings (66%+) introduce quality degradation. The **recommended configuration** of 50% layers with 20% warmup achieves 1.08× speedup while preserving image quality comparable to baseline.
 
 ---
 
@@ -108,13 +109,20 @@ After Phase 2.1's conservative settings (40% warmup, 33% layers) achieved only 1
 
 **Conclusion**: Layer fraction is 3× more impactful than warmup rate. Each 25% increase adds ~0.04× speedup.
 
-**Optimal Configuration**:
+**Recommended Configuration**:
 ```python
 warmup_fraction = 0.2   # 20% of timesteps
+max_layers_fraction = 0.5  # 50% of layers (recommended for quality)
+```
+- Achieves **1.08× speedup** with 18.7% attention reuse
+- Quality preserved (visual inspection confirms no degradation)
+
+**Maximum Speedup Configuration** (quality trade-off):
+```python
+warmup_fraction = 0.2
 max_layers_fraction = 1.0  # 100% of layers
 ```
-- Achieves **1.18× speedup** with 38.7% attention reuse
-- Quality preserved (visual inspection confirms no degradation)
+- Achieves **1.18× speedup** with 38.7% reuse, but introduces noticeable quality degradation
 
 ---
 
@@ -205,27 +213,27 @@ The attention computation `softmax(Q × K^T)` mixes representations from differe
 
 ### Layer Scheduling Strategy
 
-**Optimal Parameters** (from A100 sweeps):
+**Recommended Parameters** (from A100 sweeps):
 - **Warmup**: 20% of timesteps (no reuse)
-- **Layers**: 100% (all layers can reuse)
+- **Layers**: 50% (shallow layers only - preserves quality)
 - **Schedule**: LINEAR progression
 
 **LINEAR Schedule** (used in final implementation):
 - Early timesteps (0-20%): Compute all layers fresh (warmup period)
-- Middle timesteps (20-60%): Progressively enable reuse from shallow to deep layers
-- Late timesteps (60-100%): Maximum reuse across all layers
+- Middle timesteps (20-60%): Progressively enable reuse from shallow layers
+- Late timesteps (60-100%): Shallow layers reuse, deep layers always compute
 
 ```
 Timestep:  [0----20%----][----40%----][----60%----][----100%]
 Layer 0:   [COMPUTE.....][REUSE......][REUSE......][REUSE...]
-Layer 14:  [COMPUTE.....][COMPUTE....][REUSE......][REUSE...]
-Layer 27:  [COMPUTE.....][COMPUTE....][COMPUTE....][REUSE...]
+Layer 14:  [COMPUTE.....][COMPUTE....][REUSE......][REUSE...]  ← 50% cap
+Layer 27:  [COMPUTE.....][COMPUTE....][COMPUTE....][COMPUTE.]  ← always fresh
 ```
 
-**Why not more conservative settings?**
-- 40% warmup + 33% layers = 1.04× (misses 1.15× target)
-- 20% warmup + 100% layers = 1.18× (meets target)
-- Quality preserved in both cases (visual inspection)
+**Why 50% instead of 100%?**
+- 20% warmup + 50% layers = 1.08× with quality preserved (recommended)
+- 20% warmup + 100% layers = 1.18× but quality degradation observed
+- Deep layers capture fine details and are more sensitive to reuse
 
 ### Quantization Configuration
 

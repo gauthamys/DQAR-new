@@ -96,8 +96,8 @@ def patch_layer_schedule(warmup_fraction: float, max_layers_fraction: float = 1.
         warmup_fraction: Fraction of timesteps to skip reuse (0.0-1.0)
         max_layers_fraction: Fraction of layers that can be reused (0.0-1.0)
     """
-    # Monkey-patch the _linear_schedule method
-    original_method = LayerScheduler._linear_schedule
+    original_linear = LayerScheduler._linear_schedule
+    original_reverse = LayerScheduler._linear_reverse_schedule
 
     def patched_linear_schedule(self, progress: float) -> List[int]:
         if progress < warmup_fraction:
@@ -107,13 +107,29 @@ def patch_layer_schedule(warmup_fraction: float, max_layers_fraction: float = 1.
         num_reusable = int(adjusted_progress * max_reusable)
         return list(range(num_reusable))
 
+    def patched_linear_reverse_schedule(self, progress: float) -> List[int]:
+        """Reuse deep layers (closer to output) instead of shallow layers."""
+        if progress < warmup_fraction:
+            return []
+        adjusted_progress = (progress - warmup_fraction) / (1 - warmup_fraction)
+        max_reusable = int(self.config.num_layers * max_layers_fraction)
+        num_reusable = int(adjusted_progress * max_reusable)
+        if num_reusable == 0:
+            return []
+        # Start from deep layers (high indices)
+        start_idx = self.config.num_layers - num_reusable
+        return list(range(start_idx, self.config.num_layers))
+
     LayerScheduler._linear_schedule = patched_linear_schedule
-    return original_method
+    LayerScheduler._linear_reverse_schedule = patched_linear_reverse_schedule
+    return (original_linear, original_reverse)
 
 
-def restore_layer_schedule(original_method):
-    """Restore the original _linear_schedule method."""
-    LayerScheduler._linear_schedule = original_method
+def restore_layer_schedule(original_methods):
+    """Restore the original schedule methods."""
+    original_linear, original_reverse = original_methods
+    LayerScheduler._linear_schedule = original_linear
+    LayerScheduler._linear_reverse_schedule = original_reverse
 
 
 def run_benchmark(
@@ -552,6 +568,8 @@ def main():
                         help="Output directory")
     parser.add_argument("--save-images", action="store_true",
                         help="Save generated images")
+    parser.add_argument("--reverse", action="store_true",
+                        help="Use reverse scheduling (reuse deep layers instead of shallow)")
     args = parser.parse_args()
 
     # Setup
@@ -572,6 +590,7 @@ def main():
     print(f"Device: {device_name}")
     print(f"Layer fractions: {args.layer_fractions}")
     print(f"Fixed warmup: {args.warmup_fraction*100:.0f}%")
+    print(f"Schedule mode: {'reverse (deep layers)' if args.reverse else 'normal (shallow layers)'}")
     print(f"Samples per config: {args.num_samples}")
     print(f"Output: {output_dir}")
     print()
@@ -591,10 +610,11 @@ def main():
     vae = pipe.vae
     print(f"Model loaded: {args.model}")
 
+    schedule_type = "linear_reverse" if args.reverse else "linear"
     dqar_config = DQARConfig(
         quantization_bits=16,  # FP16 for quality
         use_layer_scheduling=True,
-        schedule_type="linear",
+        schedule_type=schedule_type,
     )
 
     wrapper = DQARDiTWrapper(model, dqar_config)

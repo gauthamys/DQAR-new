@@ -16,6 +16,7 @@ from enum import Enum
 class ScheduleType(Enum):
     """Types of layer scheduling strategies."""
     LINEAR = "linear"  # Linear progression from shallow to deep
+    LINEAR_REVERSE = "linear_reverse"  # Linear progression reusing deep layers first
     EXPONENTIAL = "exponential"  # Exponential ramp-up
     STEP = "step"  # Discrete steps
     CUSTOM = "custom"  # User-defined schedule
@@ -84,6 +85,8 @@ class LayerScheduler(nn.Module):
 
             if self.config.schedule_type == ScheduleType.LINEAR:
                 layers = self._linear_schedule(progress)
+            elif self.config.schedule_type == ScheduleType.LINEAR_REVERSE:
+                layers = self._linear_reverse_schedule(progress)
             elif self.config.schedule_type == ScheduleType.EXPONENTIAL:
                 layers = self._exponential_schedule(progress)
             elif self.config.schedule_type == ScheduleType.STEP:
@@ -113,6 +116,32 @@ class LayerScheduler(nn.Module):
         num_reusable = int(adjusted_progress * max_reusable_layers)
 
         return list(range(num_reusable))
+
+    def _linear_reverse_schedule(self, progress: float) -> List[int]:
+        """Linear progression of reusable layers, starting from deep layers.
+
+        Reuses deep layers (closer to output) instead of shallow layers.
+        Hypothesis: Deep layers process abstract representations that may be
+        more stable across timesteps than shallow layers which directly see
+        the changing input noise level.
+        """
+        # Delay reuse until 40% of timesteps complete to protect early structure
+        warmup_fraction = 0.4
+        if progress < warmup_fraction:
+            return []  # No reuse during warmup
+
+        # Number of layers that can be reused increases linearly after warmup
+        adjusted_progress = (progress - warmup_fraction) / (1 - warmup_fraction)
+
+        # Limit to fraction of layers for quality preservation
+        max_reusable_layers = self.config.num_layers // 3
+        num_reusable = int(adjusted_progress * max_reusable_layers)
+
+        # Start from deep layers (high indices) instead of shallow (low indices)
+        if num_reusable == 0:
+            return []
+        start_idx = self.config.num_layers - num_reusable
+        return list(range(start_idx, self.config.num_layers))
 
     def _exponential_schedule(self, progress: float) -> List[int]:
         """Exponential ramp-up of reusable layers."""

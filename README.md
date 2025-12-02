@@ -128,15 +128,16 @@ dqar/
 |---------------|---------|-------------|-------------|
 | Baseline | 1.00× | 0% | 2.77s |
 | Conservative (33% layers, 20% warmup) | 1.04× | 11.6% | 2.65s |
-| Balanced (66% layers, 20% warmup) | 1.11× | 24.5% | 2.50s |
-| **Recommended (100% layers, 20% warmup)** | **1.18×** | **38.7%** | **2.35s** |
+| **Recommended (50% layers, 20% warmup)** | **1.08×** | **18.7%** | **2.57s** |
+| Aggressive (66% layers, 20% warmup) | 1.11× | 24.5% | 2.50s |
+| Maximum (100% layers, 20% warmup) | 1.18× | 38.7% | 2.35s |
 
 ### Key Findings
 
 1. **Layer fraction dominates speedup**: Varying warmup (10-60%) with 33% layer cap yields only 1.02-1.04× speedup
 2. **Linear scaling**: Each 25% increase in layer fraction adds ~0.04× speedup
-3. **Target achieved**: 100% layers + 20% warmup meets the 1.15× speedup target
-4. **Quality preserved**: Visual inspection confirms no degradation at recommended settings
+3. **Quality-speedup trade-off**: Higher layer fractions (66%+) introduce quality degradation
+4. **Recommended**: 50% layers + 20% warmup achieves 1.08× speedup with quality preserved
 
 ### Hyperparameter Sweeps
 
@@ -209,8 +210,9 @@ layer_scheduling:
 ## Evaluation
 
 Achieved outcomes (NVIDIA A100):
-- **1.18× inference speedup** (18% faster) with optimal settings
-- **≤1 FID degradation** (visual quality preserved)
+- **1.08× inference speedup** (8% faster) with recommended settings (50% layers)
+- **Up to 1.18× speedup** possible with aggressive settings (100% layers, quality trade-off)
+- **≤1 FID degradation** (visual quality preserved at recommended settings)
 - **63MB cache memory** overhead
 
 Run ablation studies:
