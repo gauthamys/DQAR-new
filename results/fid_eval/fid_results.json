@@ -1,0 +1,16 @@
+{
+  "config": {
+    "warmup_fraction": 0.2,
+    "layer_fraction": 0.33,
+    "num_samples": 256,
+    "num_steps": 50,
+    "seed": 42
+  },
+  "fid_scores": {
+    "baseline_vs_linear": 16.24630147849507,
+    "baseline_vs_reverse": 16.24630147849507,
+    "linear_vs_reverse": -3.946373482222043e-05
+  },
+  "winner": "Tie",
+  "fid_difference": 0
+}
