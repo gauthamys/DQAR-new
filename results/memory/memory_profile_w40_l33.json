@@ -1,0 +1,41 @@
+{
+  "config": {
+    "warmup_fraction": 0.4,
+    "layer_fraction": 0.33,
+    "num_steps": 50,
+    "model": "facebook/DiT-XL-2-256",
+    "seed": 42,
+    "device": "NVIDIA L4",
+    "schedule_type": "linear"
+  },
+  "baseline": {
+    "config_name": "baseline",
+    "warmup_fraction": 0.0,
+    "layer_fraction": 0.0,
+    "num_steps": 50,
+    "peak_allocated_mb": 1734.33544921875,
+    "peak_reserved_mb": 1766.0,
+    "avg_allocated_mb": 1714.4404296875,
+    "cache_memory_mb": 63.00010681152344,
+    "total_time_s": 3.0777842979987327,
+    "time_per_step_ms": 61.55568595997465
+  },
+  "dqar": {
+    "config_name": "dqar_w40_l33",
+    "warmup_fraction": 0.4,
+    "layer_fraction": 0.33,
+    "num_steps": 50,
+    "peak_allocated_mb": 1734.33544921875,
+    "peak_reserved_mb": 1766.0,
+    "avg_allocated_mb": 1714.4404296875,
+    "cache_memory_mb": 63.00010681152344,
+    "total_time_s": 2.6667625390000467,
+    "time_per_step_ms": 53.33525078000093
+  },
+  "comparison": {
+    "peak_memory_delta_mb": 0.0,
+    "cache_memory_mb": 63.00010681152344,
+    "total_overhead_mb": 63.00010681152344,
+    "speedup": 1.1541276184091016
+  }
+}

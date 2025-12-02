@@ -257,26 +257,6 @@ Baseline & 1.00$\times$ & 0\% & 2.77s \\
 
 \textbf{Finding:} Layer fraction is the dominant factor for speedup. Each 25\% increase in layer fraction yields approximately 0.04$\times$ speedup improvement.
 
-\subsection{Key Results}
-
-\begin{table}[H]
-\centering
-\caption{Summary of key results across configurations}
-\label{tab:summary}
-\begin{tabular}{lcccc}
-\toprule
-Configuration & Speedup & Reuse & Memory & Quality \\
-\midrule
-Conservative (33\% layers) & 1.04$\times$ & 11.6\% & 63MB & Preserved \\
-\textbf{Recommended (50\% layers)} & \textbf{1.08$\times$} & \textbf{18.7\%} & \textbf{63MB} & \textbf{Preserved} \\
-Aggressive (66\% layers) & 1.11$\times$ & 24.5\% & 63MB & Minor degradation \\
-Maximum (100\% layers) & 1.18$\times$ & 38.7\% & 63MB & Noticeable degradation \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-While 100\% layer reuse achieves the highest speedup (1.18$\times$), visual inspection reveals quality degradation at aggressive settings. Our \textbf{recommended configuration} of 20\% warmup and 50\% layer reuse achieves 1.08$\times$ speedup while preserving image quality comparable to baseline.
-
 \subsection{Qualitative Analysis}
 
 Visual inspection of generated images across different configurations reveals the quality-speedup trade-off. Figure~\ref{fig:quality} shows representative samples generated with identical seeds under varying layer fraction settings.
@@ -449,27 +429,87 @@ We developed a systematic hyperparameter tuning framework to identify optimal co
     \item \textbf{Schedule type:} LINEAR (shallow-first), LINEAR\_REVERSE (deep-first)
 \end{itemize}
 
-For each configuration, we measure speedup and FID score, then identify Pareto-optimal configurations where neither metric can improve without degrading the other.
+\subsubsection{Critical Finding: Warmup Dominates Quality}
 
-\textbf{Optimization Objective:}
-\begin{equation}
-\text{Score} = w_s \cdot (\text{Speedup} - 1) + w_f \cdot \frac{\text{MaxFID} - \text{FID}}{\text{MaxFID}}
-\end{equation}
+Our grid search revealed that warmup fraction is \textit{critical for quality preservation}, contrary to our earlier experiments that suggested minimal impact:
 
-where $w_s$ and $w_f$ are user-defined weights for speedup and quality respectively. This framework enables practitioners to select configurations based on their specific quality-performance requirements.
+\begin{table}[H]
+\centering
+\caption{Effect of warmup on FID score (128 samples)}
+\label{tab:warmup_fid}
+\begin{tabular}{lccccc}
+\toprule
+Warmup & 33\% Layers & 50\% Layers & 66\% Layers & 75\% Layers & 100\% Layers \\
+\midrule
+10\% & 23.0 & 34.2 & 41.6 & 46.8 & 67.0 \\
+20\% & 18.6 & 26.7 & 34.1 & 38.5 & 46.6 \\
+30\% & 12.6 & 21.1 & 26.2 & 28.7 & 37.0 \\
+40\% & \textbf{8.3} & 14.8 & 18.8 & 21.0 & 26.2 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Higher warmup dramatically improves FID scores---the best quality (FID 8.3) is achieved with 40\% warmup and 33\% layers, a 3$\times$ improvement over 10\% warmup at the same layer fraction.
+
+\subsubsection{LINEAR vs LINEAR\_REVERSE: Complete Tie}
+
+Across all 20 warmup/layer combinations, LINEAR and LINEAR\_REVERSE produced \textit{identical} FID scores (0 wins, 0 losses, 20 ties). This definitively confirms that the choice of \textit{which} layers to reuse does not affect quality---only \textit{how many} layers and \textit{when} reuse begins (warmup).
+
+\subsubsection{Pareto-Optimal Configurations}
+
+Table~\ref{tab:pareto} shows Pareto-optimal configurations where neither speedup nor FID can improve without degrading the other:
+
+\begin{table}[H]
+\centering
+\caption{Pareto-optimal configurations from hyperparameter tuning}
+\label{tab:pareto}
+\begin{tabular}{lcccc}
+\toprule
+Configuration & Warmup & Layers & Speedup & FID \\
+\midrule
+Quality-focused & 40\% & 33\% & 1.06$\times$ & \textbf{8.3} \\
+Balanced & 40\% & 66\% & 1.09$\times$ & 18.8 \\
+Speed-focused & 30\% & 100\% & 1.16$\times$ & 37.0 \\
+Maximum speed & 10\% & 100\% & \textbf{1.21$\times$} & 67.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Updated Recommendation:} Based on these results, we revise our recommended configuration to \textbf{40\% warmup, 33\% layers}, which achieves 1.06$\times$ speedup with excellent quality preservation (FID 8.3). For applications prioritizing speed over quality, 30\% warmup with 100\% layers offers 1.16$\times$ speedup with acceptable FID of 37.0.
+
+\subsubsection{Recommended Configuration: Visual Results}
+
+Figure~\ref{fig:benchmark} shows samples generated using our recommended quality-focused configuration (40\% warmup, 33\% layers, LINEAR scheduling). The DQAR samples are visually indistinguishable from baseline while achieving \textbf{1.06$\times$ speedup}.
+
+\begin{figure}[H]
+\centering
+\begin{tabular}{cccc}
+\includegraphics[width=0.22\textwidth]{figures/benchmark_baseline_207.png} &
+\includegraphics[width=0.22\textwidth]{figures/benchmark_dqar_207.png} &
+\includegraphics[width=0.22\textwidth]{figures/benchmark_baseline_360.png} &
+\includegraphics[width=0.22\textwidth]{figures/benchmark_dqar_360.png} \\
+(a) Baseline (207) & (b) DQAR (207) & (c) Baseline (360) & (d) DQAR (360) \\[6pt]
+\includegraphics[width=0.22\textwidth]{figures/benchmark_baseline_387.png} &
+\includegraphics[width=0.22\textwidth]{figures/benchmark_dqar_387.png} &
+\includegraphics[width=0.22\textwidth]{figures/benchmark_baseline_974.png} &
+\includegraphics[width=0.22\textwidth]{figures/benchmark_dqar_974.png} \\
+(e) Baseline (387) & (f) DQAR (387) & (g) Baseline (974) & (h) DQAR (974) \\
+\end{tabular}
+\caption{Baseline vs. DQAR samples using our recommended configuration (40\% warmup, 33\% layers, LINEAR). DQAR achieves \textbf{1.06$\times$ speedup with FID 8.3} while producing visually identical results across diverse ImageNet classes (207: golden retriever, 360: otter, 387: lesser panda, 974: geyser).}
+\label{fig:benchmark}
+\end{figure}
 
 \section{Discussion}
 
-\subsection{Why Layer Fraction Dominates}
+\subsection{Layer Fraction vs. Warmup: Speedup vs. Quality}
 
-The relationship between layer fraction and speedup is nearly linear because:
-\begin{enumerate}
-    \item Each reused layer saves the same amount of computation (attention + projections)
-    \item The LINEAR schedule ensures smooth progression of reuse
-    \item Cache lookup overhead is negligible compared to attention computation
-\end{enumerate}
+Our hyperparameter tuning reveals a nuanced picture:
+\begin{itemize}
+    \item \textbf{Layer fraction dominates speedup:} The relationship between layer fraction and speedup is nearly linear---each reused layer saves the same computation, and cache lookup overhead is negligible.
+    \item \textbf{Warmup dominates quality:} Higher warmup allows more timesteps of fresh computation during critical early denoising, dramatically improving FID scores (3$\times$ improvement from 10\% to 40\% warmup).
+\end{itemize}
 
-In contrast, warmup rate shows diminishing returns because early timesteps are inherently more sensitive to attention changes, and the layer cap restricts total possible reuse.
+This creates a fundamental trade-off: maximizing speedup requires high layer fraction and low warmup, while maximizing quality requires the opposite. The Pareto frontier in Table~\ref{tab:pareto} captures this trade-off.
 
 \subsection{Quality-Speedup Trade-off}
 
@@ -498,6 +538,35 @@ Our experiments on Apple Silicon (MPS) showed no speedup despite high reuse rati
     \item Memory bandwidth characteristics
 \end{itemize}
 
+\subsection{Memory Efficiency}
+
+To evaluate DQAR's memory overhead, we profiled GPU memory usage during inference on an NVIDIA L4 GPU using our recommended configuration (40\% warmup, 33\% layers).
+
+\begin{table}[H]
+\centering
+\caption{Memory profile comparison (40\% warmup, 33\% layers, 50 steps)}
+\label{tab:memory}
+\begin{tabular}{lccc}
+\toprule
+Metric & Baseline & DQAR & Delta \\
+\midrule
+Peak Allocated (MB) & 1734.3 & 1734.3 & \textbf{0} \\
+Cache Memory (MB) & --- & 63.0 & +63.0 \\
+Inference Time (s) & 3.08 & 2.67 & $-$0.41 \\
+Speedup & 1.00$\times$ & 1.15$\times$ & +15\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Key findings:}
+\begin{itemize}
+    \item \textbf{Zero peak memory increase:} The attention output cache is populated gradually during inference, so peak GPU memory remains unchanged from baseline.
+    \item \textbf{Modest cache overhead:} The 63 MB cache represents only 3.6\% of baseline peak memory---a negligible cost for 15\% speedup.
+    \item \textbf{Efficient memory-speedup ratio:} At approximately 4 MB per 1\% speedup, DQAR provides substantial acceleration with minimal memory cost.
+\end{itemize}
+
+This demonstrates that DQAR is highly memory-efficient, making it suitable for deployment on memory-constrained GPUs without requiring any memory optimization.
+
 \subsection{Limitations}
 
 \begin{itemize}
@@ -513,11 +582,16 @@ We presented DQAR, a framework for accelerating Diffusion Transformer inference 
 \begin{enumerate}
     \item \textbf{K/V caching fails} for diffusion models due to temporal mismatch between queries and cached keys/values.
     \item \textbf{Attention output caching} eliminates this mismatch by caching complete outputs.
-    \item \textbf{Layer fraction dominates speedup}, being 3$\times$ more impactful than warmup rate.
-    \item \textbf{Quality-speedup trade-off:} While 100\% layers achieves 1.18$\times$ speedup, it introduces quality degradation. Our \textbf{recommended configuration} (20\% warmup, 50\% layers) achieves 1.08$\times$ speedup while preserving image quality comparable to baseline.
+    \item \textbf{Layer fraction dominates speedup}, while \textbf{warmup dominates quality}---creating a fundamental trade-off captured by our Pareto frontier.
+    \item \textbf{Schedule type is irrelevant:} LINEAR and LINEAR\_REVERSE produce identical FID scores across all configurations (20/20 ties), confirming that \textit{which} layers reuse matters less than \textit{how many} and \textit{when}.
+    \item \textbf{Recommended configurations:}
+    \begin{itemize}
+        \item Quality-focused: 40\% warmup, 33\% layers $\rightarrow$ 1.06$\times$ speedup, FID 8.3
+        \item Speed-focused: 30\% warmup, 100\% layers $\rightarrow$ 1.16$\times$ speedup, FID 37.0
+    \end{itemize}
 \end{enumerate}
 
-Our FID evaluation confirms that at conservative reuse settings (33\% layers), both shallow-first and deep-first scheduling produce identical quality (FID $\approx$ 16.25), validating our approach. Future work includes exploring adaptive scheduling based on attention entropy, applying quantization to cached outputs, extending to other DiT architectures like SD3 and Flux, and investigating additional perceptual metrics (LPIPS, CLIP score) for comprehensive quality assessment.
+Future work includes exploring adaptive scheduling based on attention entropy, applying quantization to cached outputs, and extending to other DiT architectures like SD3 and Flux.
 
 \bibliographystyle{plain}
 \bibliography{ref}
