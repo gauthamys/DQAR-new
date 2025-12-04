@@ -166,8 +166,12 @@ class DQARDDIMSampler:
         # Denoising loop
         iterator = tqdm(timesteps, desc="DDIM Sampling") if progress_bar else timesteps
         for i, t in enumerate(iterator):
-            # Update DQAR with current state (use loop index i, not timestep value t)
-            self.model.set_timestep(i, len(timesteps))
+            # Update DQAR with current state
+            # Pass both step index (for scheduling) and actual timestep (for SNR computation)
+            actual_t = t.item() if hasattr(t, 'item') else int(t)
+            if i == 0:
+                print(f"[SAMPLER DEBUG] Step {i}: actual_t={actual_t}, t={t}")
+            self.model.set_timestep(i, len(timesteps), actual_timestep=actual_t)
             self.model.update_latent_info(
                 latents,
                 alphas_cumprod=self.alphas_cumprod,
@@ -335,8 +339,10 @@ class DQARDPMSolverSampler:
         # Denoising loop
         iterator = tqdm(timesteps, desc="DPM-Solver Sampling") if progress_bar else timesteps
         for i, t in enumerate(iterator):
-            # Update DQAR with current state (use loop index i, not timestep value t)
-            self.model.set_timestep(i, len(timesteps))
+            # Update DQAR with current state
+            # Pass both step index (for scheduling) and actual timestep (for SNR computation)
+            actual_t = t.item() if hasattr(t, 'item') else int(t)
+            self.model.set_timestep(i, len(timesteps), actual_timestep=actual_t)
             self.model.update_latent_info(
                 latents,
                 alphas_cumprod=self.alphas_cumprod,

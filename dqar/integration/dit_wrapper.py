@@ -156,16 +156,21 @@ class DQARDiTWrapper(nn.Module):
         self._processors_installed = False
         self._original_processors = None
 
-    def set_timestep(self, timestep_idx: int, total_timesteps: int):
+    def set_timestep(self, timestep_idx: int, total_timesteps: int, actual_timestep: int = None):
         """
         Set current timestep for scheduling decisions.
 
         Args:
             timestep_idx: Current timestep index (0 = first step, total-1 = last step)
             total_timesteps: Total number of timesteps
+            actual_timestep: The actual diffusion timestep value (e.g., 999 -> 0) for SNR computation
         """
         self.current_timestep = timestep_idx
         self.timestep_idx = timestep_idx
+        # Store actual timestep for SNR computation (defaults to timestep_idx if not provided)
+        self.actual_diffusion_timestep = actual_timestep if actual_timestep is not None else timestep_idx
+        if timestep_idx == 0:
+            print(f"[WRAPPER DEBUG] set_timestep called: idx={timestep_idx}, actual={actual_timestep}, stored={self.actual_diffusion_timestep}")
 
     def update_latent_info(
         self,
@@ -187,8 +192,11 @@ class DQARDiTWrapper(nn.Module):
         if alphas_cumprod is not None:
             self.snr_computer.set_schedule(alphas_cumprod)
 
+        # Use actual diffusion timestep for SNR computation (not step index)
+        # This is critical because alphas_cumprod is indexed by diffusion timestep (0-999)
+        snr_timestep = getattr(self, 'actual_diffusion_timestep', self.current_timestep)
         self.current_snr = self.snr_computer.compute(
-            x_t, self.current_timestep, x_0=x_0
+            x_t, snr_timestep, x_0=x_0
         ).mean().item()
 
     def install_attention_processors(self) -> None:

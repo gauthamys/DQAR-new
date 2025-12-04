@@ -165,6 +165,7 @@ def generate_images_with_scheduler(
     total_reused = 0
     total_computed = 0
     snr_values = []
+    debug_snr_printed = False
 
     print(f"  Generating {num_samples} images for {config_name}...")
 
@@ -193,6 +194,22 @@ def generate_images_with_scheduler(
         if wrapper.current_snr is not None:
             snr_values.append(wrapper.current_snr)
 
+        # Debug: print SNR info for first sample
+        if i == 0 and not debug_snr_printed:
+            print(f"\n  [DEBUG] SNR at final step: {wrapper.current_snr:.6f}")
+            print(f"  [DEBUG] Actual diffusion timestep: {getattr(wrapper, 'actual_diffusion_timestep', 'N/A')}")
+            print(f"  [DEBUG] Step index: {wrapper.timestep_idx}")
+            print(f"  [DEBUG] Manager SNR: {wrapper.manager.current_snr}")
+            print(f"  [DEBUG] Stats: reused={stats['reused']}, computed={stats['computed']}")
+            # Print SNR history from snr_computer
+            snr_history = wrapper.snr_computer.get_history()
+            if snr_history:
+                print(f"  [DEBUG] SNR at step 0: {snr_history[0][1]:.6f} (should be LOW for early noisy steps)")
+                if len(snr_history) > 25:
+                    print(f"  [DEBUG] SNR at step 25: {snr_history[25][1]:.6f}")
+                print(f"  [DEBUG] SNR at last step: {snr_history[-1][1]:.6f} (should be HIGH for clean steps)")
+            debug_snr_printed = True
+
         # Save image
         img_path = image_dir / f"sample_{i:04d}.png"
         save_tensor_as_image(decoded, img_path)
@@ -216,8 +233,8 @@ def main():
     parser.add_argument("--num-steps", type=int, default=50)
     parser.add_argument("--warmup-fraction", type=float, default=0.4)
     parser.add_argument("--layer-fraction", type=float, default=0.33)
-    parser.add_argument("--snr-low", type=float, default=0.5)
-    parser.add_argument("--snr-high", type=float, default=5.0)
+    parser.add_argument("--snr-low", type=float, default=0.1)
+    parser.add_argument("--snr-high", type=float, default=float('inf'))
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--output-dir", type=str, default="results/adaptive")
     args = parser.parse_args()
@@ -237,7 +254,7 @@ def main():
     print("=" * 70)
     print(f"Device: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'}")
     print(f"Warmup: {args.warmup_fraction:.0%}, Layers: {args.layer_fraction:.0%}")
-    print(f"SNR Range: [{args.snr_low}, {args.snr_high}]")
+    print(f"SNR Gate: > {args.snr_low} (block early noisy steps)")
     print(f"Samples: {args.num_samples}")
     print()
 
@@ -310,7 +327,7 @@ def main():
     torch.cuda.empty_cache()
 
     # === 3. SNR-Gated Schedule ===
-    print(f"\n3. Generating SNR-GATED SCHEDULE (SNR in [{args.snr_low}, {args.snr_high}])...")
+    print(f"\n3. Generating SNR-GATED SCHEDULE (SNR > {args.snr_low})...")
 
     snr_config = SchedulerConfig(num_layers=28, num_timesteps=args.num_steps)
     snr_scheduler = SNRGatedScheduler(
@@ -333,15 +350,15 @@ def main():
     gc.collect()
     torch.cuda.empty_cache()
 
-    # === 4. Aggressive SNR-Gated (tighter range) ===
-    print(f"\n4. Generating TIGHT SNR-GATED (SNR in [1.0, 3.0])...")
+    # === 4. Conservative SNR-Gated (block very early steps) ===
+    print(f"\n4. Generating CONSERVATIVE SNR-GATED (SNR > 0.5 only)...")
 
     tight_snr_scheduler = SNRGatedScheduler(
         snr_config,
         warmup_fraction=args.warmup_fraction,
         layer_fraction=args.layer_fraction,
-        snr_low=1.0,
-        snr_high=3.0,
+        snr_low=0.5,  # Block very early noisy steps
+        snr_high=float('inf'),  # No upper limit
     )
 
     tight_result = generate_images_with_scheduler(

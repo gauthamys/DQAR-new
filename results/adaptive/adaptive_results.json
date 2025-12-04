@@ -1,0 +1,30 @@
+{
+  "config": {
+    "warmup_fraction": 0.4,
+    "layer_fraction": 0.33,
+    "snr_low": 0.1,
+    "snr_high": Infinity,
+    "num_samples": 5
+  },
+  "results": {
+    "static": {
+      "reuse_ratio": 0.08785714285714286,
+      "fid": -1.0,
+      "total_reused": 615,
+      "total_computed": 6385
+    },
+    "snr_gated": {
+      "reuse_ratio": 0.08785714285714286,
+      "fid": -1.0,
+      "total_reused": 615,
+      "total_computed": 6385
+    },
+    "snr_tight": {
+      "reuse_ratio": 0.08785714285714286,
+      "fid": -1.0,
+      "total_reused": 615,
+      "total_computed": 6385
+    }
+  },
+  "best": "static"
+}
