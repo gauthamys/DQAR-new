@@ -169,8 +169,6 @@ class DQARDiTWrapper(nn.Module):
         self.timestep_idx = timestep_idx
         # Store actual timestep for SNR computation (defaults to timestep_idx if not provided)
         self.actual_diffusion_timestep = actual_timestep if actual_timestep is not None else timestep_idx
-        if timestep_idx == 0:
-            print(f"[WRAPPER DEBUG] set_timestep called: idx={timestep_idx}, actual={actual_timestep}, stored={self.actual_diffusion_timestep}")
 
     def update_latent_info(
         self,

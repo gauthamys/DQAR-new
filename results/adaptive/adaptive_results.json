@@ -3,28 +3,28 @@
     "warmup_fraction": 0.4,
     "layer_fraction": 0.33,
     "snr_low": 0.1,
-    "snr_high": Infinity,
-    "num_samples": 5
+    "snr_high": "Infinity",
+    "num_samples": 64
   },
   "results": {
     "static": {
       "reuse_ratio": 0.08785714285714286,
-      "fid": -1.0,
-      "total_reused": 615,
-      "total_computed": 6385
+      "fid": 9.040147009773932,
+      "total_reused": 7872,
+      "total_computed": 81728
     },
     "snr_gated": {
-      "reuse_ratio": 0.08785714285714286,
-      "fid": -1.0,
-      "total_reused": 615,
-      "total_computed": 6385
+      "reuse_ratio": 0.08642857142857142,
+      "fid": 8.76606302312885,
+      "total_reused": 7744,
+      "total_computed": 81856
     },
     "snr_tight": {
-      "reuse_ratio": 0.08785714285714286,
-      "fid": -1.0,
-      "total_reused": 615,
-      "total_computed": 6385
+      "reuse_ratio": 0.07428571428571429,
+      "fid": 5.68097594926985,
+      "total_reused": 6656,
+      "total_computed": 82944
     }
   },
-  "best": "static"
+  "best": "snr_tight"
 }

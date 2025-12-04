@@ -1,1 +1,0 @@
-"""DQAR test suite."""

@@ -169,8 +169,6 @@ class DQARDDIMSampler:
             # Update DQAR with current state
             # Pass both step index (for scheduling) and actual timestep (for SNR computation)
             actual_t = t.item() if hasattr(t, 'item') else int(t)
-            if i == 0:
-                print(f"[SAMPLER DEBUG] Step {i}: actual_t={actual_t}, t={t}")
             self.model.set_timestep(i, len(timesteps), actual_timestep=actual_t)
             self.model.update_latent_info(
                 latents,

@@ -1,0 +1,410 @@
+{
+  "config": {
+    "n_trials": 30,
+    "num_samples": 32,
+    "warmup_fraction": 0.4,
+    "layer_fraction": 0.33,
+    "compute_fid": true
+  },
+  "pareto_frontier": [
+    {
+      "snr_threshold": 0.041168988591604894,
+      "entropy_threshold": 4.864594334728975,
+      "reuse_ratio": 0.08785714285714286,
+      "fid": 9.496957037521952
+    },
+    {
+      "snr_threshold": 0.06877704223043679,
+      "entropy_threshold": 4.59194180935452,
+      "reuse_ratio": 0.08714285714285715,
+      "fid": 8.953601503909965
+    },
+    {
+      "snr_threshold": 0.09045457782107613,
+      "entropy_threshold": 1.9639864884346896,
+      "reuse_ratio": 0.08642857142857142,
+      "fid": 8.908203426543338
+    },
+    {
+      "snr_threshold": 0.11616722433639892,
+      "entropy_threshold": 4.3977926559872085,
+      "reuse_ratio": 0.08571428571428572,
+      "fid": 8.473058123398317
+    },
+    {
+      "snr_threshold": 0.13010318597055903,
+      "entropy_threshold": 4.7699849176399995,
+      "reuse_ratio": 0.085,
+      "fid": 8.256256581164905
+    },
+    {
+      "snr_threshold": 0.176985004103839,
+      "entropy_threshold": 1.3819228808861534,
+      "reuse_ratio": 0.08357142857142857,
+      "fid": 7.970227339041799
+    },
+    {
+      "snr_threshold": 0.24407646968955765,
+      "entropy_threshold": 2.728296095500716,
+      "reuse_ratio": 0.08071428571428571,
+      "fid": 7.433181610716048
+    },
+    {
+      "snr_threshold": 0.31203728088487304,
+      "entropy_threshold": 1.201975341512912,
+      "reuse_ratio": 0.07857142857142857,
+      "fid": 6.9783341855054175
+    },
+    {
+      "snr_threshold": 0.36364993441420124,
+      "entropy_threshold": 1.325320294340452,
+      "reuse_ratio": 0.07642857142857143,
+      "fid": 6.572139606128644
+    },
+    {
+      "snr_threshold": 0.39934756431671947,
+      "entropy_threshold": 2.814054972861252,
+      "reuse_ratio": 0.07642857142857143,
+      "fid": 6.572139606128644
+    },
+    {
+      "snr_threshold": 0.5175599632000338,
+      "entropy_threshold": 3.481350279592919,
+      "reuse_ratio": 0.07428571428571429,
+      "fid": 6.402198940012568
+    },
+    {
+      "snr_threshold": 0.6084844859190754,
+      "entropy_threshold": 2.86140394234507,
+      "reuse_ratio": 0.07142857142857142,
+      "fid": 6.080374644260331
+    },
+    {
+      "snr_threshold": 0.5842892970704363,
+      "entropy_threshold": 2.148628294821613,
+      "reuse_ratio": 0.07142857142857142,
+      "fid": 6.080374644260331
+    },
+    {
+      "snr_threshold": 0.6092275383467414,
+      "entropy_threshold": 0.9395245130287274,
+      "reuse_ratio": 0.07142857142857142,
+      "fid": 6.080374644260331
+    },
+    {
+      "snr_threshold": 0.6234221521788219,
+      "entropy_threshold": 2.8403060953001487,
+      "reuse_ratio": 0.07142857142857142,
+      "fid": 6.080374644260331
+    },
+    {
+      "snr_threshold": 0.749080237694725,
+      "entropy_threshold": 4.7782143788446225,
+      "reuse_ratio": 0.06857142857142857,
+      "fid": 5.629381602415407
+    },
+    {
+      "snr_threshold": 0.8638900372842315,
+      "entropy_threshold": 1.8105311308911887,
+      "reuse_ratio": 0.06571428571428571,
+      "fid": 5.341702963006469
+    },
+    {
+      "snr_threshold": 0.9121399684340719,
+      "entropy_threshold": 4.033291826268561,
+      "reuse_ratio": 0.06571428571428571,
+      "fid": 5.341702963006469
+    },
+    {
+      "snr_threshold": 1.2022300234864176,
+      "entropy_threshold": 3.6863266000822046,
+      "reuse_ratio": 0.062142857142857146,
+      "fid": 4.763163934907936
+    },
+    {
+      "snr_threshold": 1.184829137724085,
+      "entropy_threshold": 0.7090268572399898,
+      "reuse_ratio": 0.062142857142857146,
+      "fid": 4.763163934907936
+    },
+    {
+      "snr_threshold": 1.0934205586865593,
+      "entropy_threshold": 1.3318450498648717,
+      "reuse_ratio": 0.062142857142857146,
+      "fid": 4.763163934907936
+    },
+    {
+      "snr_threshold": 1.1957999576221703,
+      "entropy_threshold": 4.6484340576040255,
+      "reuse_ratio": 0.062142857142857146,
+      "fid": 4.763163934907936
+    },
+    {
+      "snr_threshold": 1.4639878836228102,
+      "entropy_threshold": 3.1939631788866647,
+      "reuse_ratio": 0.05857142857142857,
+      "fid": 4.235822907821955
+    },
+    {
+      "snr_threshold": 1.223705789444759,
+      "entropy_threshold": 1.1277223729341883,
+      "reuse_ratio": 0.05857142857142857,
+      "fid": 4.235822907821955
+    },
+    {
+      "snr_threshold": 1.2150897038028767,
+      "entropy_threshold": 1.2673585565928118,
+      "reuse_ratio": 0.05857142857142857,
+      "fid": 4.235822907821955
+    },
+    {
+      "snr_threshold": 1.3684660530243138,
+      "entropy_threshold": 2.480686221828206,
+      "reuse_ratio": 0.05857142857142857,
+      "fid": 4.235822907821955
+    },
+    {
+      "snr_threshold": 1.6648852816008435,
+      "entropy_threshold": 1.4555259980522428,
+      "reuse_ratio": 0.055,
+      "fid": 3.790767848188068
+    },
+    {
+      "snr_threshold": 1.8789978831283782,
+      "entropy_threshold": 4.526723076924419,
+      "reuse_ratio": 0.055,
+      "fid": 3.790767848188068
+    },
+    {
+      "snr_threshold": 1.9312640661491187,
+      "entropy_threshold": 4.137788066524076,
+      "reuse_ratio": 0.05142857142857143,
+      "fid": 3.348042072637327
+    },
+    {
+      "snr_threshold": 1.9391692555291171,
+      "entropy_threshold": 3.9880977051250155,
+      "reuse_ratio": 0.05142857142857143,
+      "fid": 3.348042072637327
+    }
+  ],
+  "recommended": {
+    "snr_threshold": 0.36364993441420124,
+    "entropy_threshold": 1.325320294340452,
+    "reuse_ratio": 0.07642857142857143,
+    "fid": 6.572139606128644
+  },
+  "all_trials": [
+    {
+      "trial": 0,
+      "snr_threshold": 0.749080237694725,
+      "entropy_threshold": 4.7782143788446225,
+      "reuse_ratio": 0.06857142857142857,
+      "fid": 5.629381602415407
+    },
+    {
+      "trial": 1,
+      "snr_threshold": 1.4639878836228102,
+      "entropy_threshold": 3.1939631788866647,
+      "reuse_ratio": 0.05857142857142857,
+      "fid": 4.235822907821955
+    },
+    {
+      "trial": 2,
+      "snr_threshold": 0.31203728088487304,
+      "entropy_threshold": 1.201975341512912,
+      "reuse_ratio": 0.07857142857142857,
+      "fid": 6.9783341855054175
+    },
+    {
+      "trial": 3,
+      "snr_threshold": 0.11616722433639892,
+      "entropy_threshold": 4.3977926559872085,
+      "reuse_ratio": 0.08571428571428572,
+      "fid": 8.473058123398317
+    },
+    {
+      "trial": 4,
+      "snr_threshold": 1.2022300234864176,
+      "entropy_threshold": 3.6863266000822046,
+      "reuse_ratio": 0.062142857142857146,
+      "fid": 4.763163934907936
+    },
+    {
+      "trial": 5,
+      "snr_threshold": 0.041168988591604894,
+      "entropy_threshold": 4.864594334728975,
+      "reuse_ratio": 0.08785714285714286,
+      "fid": 9.496957037521952
+    },
+    {
+      "trial": 6,
+      "snr_threshold": 1.6648852816008435,
+      "entropy_threshold": 1.4555259980522428,
+      "reuse_ratio": 0.055,
+      "fid": 3.790767848188068
+    },
+    {
+      "trial": 7,
+      "snr_threshold": 0.36364993441420124,
+      "entropy_threshold": 1.325320294340452,
+      "reuse_ratio": 0.07642857142857143,
+      "fid": 6.572139606128644
+    },
+    {
+      "trial": 8,
+      "snr_threshold": 0.6084844859190754,
+      "entropy_threshold": 2.86140394234507,
+      "reuse_ratio": 0.07142857142857142,
+      "fid": 6.080374644260331
+    },
+    {
+      "trial": 9,
+      "snr_threshold": 0.8638900372842315,
+      "entropy_threshold": 1.8105311308911887,
+      "reuse_ratio": 0.06571428571428571,
+      "fid": 5.341702963006469
+    },
+    {
+      "trial": 10,
+      "snr_threshold": 1.223705789444759,
+      "entropy_threshold": 1.1277223729341883,
+      "reuse_ratio": 0.05857142857142857,
+      "fid": 4.235822907821955
+    },
+    {
+      "trial": 11,
+      "snr_threshold": 0.5842892970704363,
+      "entropy_threshold": 2.148628294821613,
+      "reuse_ratio": 0.07142857142857142,
+      "fid": 6.080374644260331
+    },
+    {
+      "trial": 12,
+      "snr_threshold": 0.9121399684340719,
+      "entropy_threshold": 4.033291826268561,
+      "reuse_ratio": 0.06571428571428571,
+      "fid": 5.341702963006469
+    },
+    {
+      "trial": 13,
+      "snr_threshold": 0.39934756431671947,
+      "entropy_threshold": 2.814054972861252,
+      "reuse_ratio": 0.07642857142857143,
+      "fid": 6.572139606128644
+    },
+    {
+      "trial": 14,
+      "snr_threshold": 1.184829137724085,
+      "entropy_threshold": 0.7090268572399898,
+      "reuse_ratio": 0.062142857142857146,
+      "fid": 4.763163934907936
+    },
+    {
+      "trial": 15,
+      "snr_threshold": 1.2150897038028767,
+      "entropy_threshold": 1.2673585565928118,
+      "reuse_ratio": 0.05857142857142857,
+      "fid": 4.235822907821955
+    },
+    {
+      "trial": 16,
+      "snr_threshold": 0.13010318597055903,
+      "entropy_threshold": 4.7699849176399995,
+      "reuse_ratio": 0.085,
+      "fid": 8.256256581164905
+    },
+    {
+      "trial": 17,
+      "snr_threshold": 1.9312640661491187,
+      "entropy_threshold": 4.137788066524076,
+      "reuse_ratio": 0.05142857142857143,
+      "fid": 3.348042072637327
+    },
+    {
+      "trial": 18,
+      "snr_threshold": 0.6092275383467414,
+      "entropy_threshold": 0.9395245130287274,
+      "reuse_ratio": 0.07142857142857142,
+      "fid": 6.080374644260331
+    },
+    {
+      "trial": 19,
+      "snr_threshold": 1.3684660530243138,
+      "entropy_threshold": 2.480686221828206,
+      "reuse_ratio": 0.05857142857142857,
+      "fid": 4.235822907821955
+    },
+    {
+      "trial": 20,
+      "snr_threshold": 0.24407646968955765,
+      "entropy_threshold": 2.728296095500716,
+      "reuse_ratio": 0.08071428571428571,
+      "fid": 7.433181610716048
+    },
+    {
+      "trial": 21,
+      "snr_threshold": 0.06877704223043679,
+      "entropy_threshold": 4.59194180935452,
+      "reuse_ratio": 0.08714285714285715,
+      "fid": 8.953601503909965
+    },
+    {
+      "trial": 22,
+      "snr_threshold": 0.5175599632000338,
+      "entropy_threshold": 3.481350279592919,
+      "reuse_ratio": 0.07428571428571429,
+      "fid": 6.402198940012568
+    },
+    {
+      "trial": 23,
+      "snr_threshold": 0.6234221521788219,
+      "entropy_threshold": 2.8403060953001487,
+      "reuse_ratio": 0.07142857142857142,
+      "fid": 6.080374644260331
+    },
+    {
+      "trial": 24,
+      "snr_threshold": 1.0934205586865593,
+      "entropy_threshold": 1.3318450498648717,
+      "reuse_ratio": 0.062142857142857146,
+      "fid": 4.763163934907936
+    },
+    {
+      "trial": 25,
+      "snr_threshold": 1.9391692555291171,
+      "entropy_threshold": 3.9880977051250155,
+      "reuse_ratio": 0.05142857142857143,
+      "fid": 3.348042072637327
+    },
+    {
+      "trial": 26,
+      "snr_threshold": 1.8789978831283782,
+      "entropy_threshold": 4.526723076924419,
+      "reuse_ratio": 0.055,
+      "fid": 3.790767848188068
+    },
+    {
+      "trial": 27,
+      "snr_threshold": 1.1957999576221703,
+      "entropy_threshold": 4.6484340576040255,
+      "reuse_ratio": 0.062142857142857146,
+      "fid": 4.763163934907936
+    },
+    {
+      "trial": 28,
+      "snr_threshold": 0.176985004103839,
+      "entropy_threshold": 1.3819228808861534,
+      "reuse_ratio": 0.08357142857142857,
+      "fid": 7.970227339041799
+    },
+    {
+      "trial": 29,
+      "snr_threshold": 0.09045457782107613,
+      "entropy_threshold": 1.9639864884346896,
+      "reuse_ratio": 0.08642857142857142,
+      "fid": 8.908203426543338
+    }
+  ],
+  "timestamp": "2025-12-04T11:20:54.292543"
+}
