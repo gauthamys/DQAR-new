@@ -1,7 +1,10 @@
 # CS 494 - Generative AI - Course Project
 
-Video - https://www.youtube.com/watch?v=7pKXLgNDdyk
-Report - [Project Report (PDF)](CS494-Report-Gautham-Satyanarayana.pdf)
+## Video
+https://www.youtube.com/watch?v=7pKXLgNDdyk
+
+## Report
+[Project Report (PDF)](CS494-Report-Gautham-Satyanarayana.pdf)
 
 # DQAR: Dynamic and Quantization-Aware Attention Reuse for Diffusion Transformers
 
