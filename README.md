@@ -345,39 +345,4 @@ from dqar.integration import (
 | `use_learned_policy` | bool | False | Use MLP policy instead of thresholds |
 | `use_layer_scheduling` | bool | True | Enable timestep-aware layer selection |
 | `schedule_type` | str | "step" | Scheduling strategy |
-| `cfg_sharing` | bool | True | Share cache between CFG branches |
-
-## Testing
-
-```bash
-# Run all tests
-pytest tests/ -v
-
-# Run specific test file
-pytest tests/test_core.py -v
-
-# With coverage
-pytest tests/ --cov=dqar --cov-report=html
-```
-
-## Citation
-
-If you use DQAR in your research, please cite:
-
-```bibtex
-@article{dqar2025,
-  title={Dynamic and Quantization-Aware Attention Reuse for Diffusion Transformers},
-  author={Satyanarayana, Gautham},
-  year={2025}
-}
-```
-
-## Related Work
-
-- [Attention Compression for Diffusion Transformer Models](https://arxiv.org/abs/...) (NeurIPS 2024)
-- [PTQ4DiT: Post-training Quantization for Diffusion Transformers](https://arxiv.org/abs/2405.16005) (NeurIPS 2024)
-- [Q-DiT: Accurate Post-Training Quantization for Diffusion Transformers](https://arxiv.org/abs/2406.17343)
-
-## License
-
-MIT License
+| `cfg_sharing` | bool | True | Share cache between 
