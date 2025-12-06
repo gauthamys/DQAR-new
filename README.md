@@ -1,3 +1,7 @@
+# CS 494 - Generative AI - Course Project
+
+Video - https://www.youtube.com/watch?v=7pKXLgNDdyk
+
 # DQAR: Dynamic and Quantization-Aware Attention Reuse for Diffusion Transformers
 
 A unified framework combining entropy- and SNR-based attention reuse with low-bit quantized KV caching for efficient Diffusion Transformer (DiT) inference.
